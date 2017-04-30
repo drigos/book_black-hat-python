@@ -3,6 +3,7 @@
 
 
 import getopt
+import socket
 import sys
 
 
@@ -69,12 +70,35 @@ def main():
         else:
             assert False, "Unhandled option"
 
-    print("listen:", listen)
-    print("command:", command)
-    print("upload:", upload)
-    print("execute:", execute)
-    print("target:", target)
-    print("port:", port)
+    if not listen and len(target) and port > 0:
+        client_loop()
+
+    if listen:
+        server_loop()
+
+
+def client_loop():
+    print("Modo: client")
+
+
+def server_loop():
+    print("Modo: server")
+
+    global target
+    global port
+
+    if not len(target):
+        target = "0.0.0.0"
+
+    print((target, port))
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server.bind((target, port))
+    server.listen(5)
+
+    socket_fd, socket_str = server.accept()
+    socket_fd.send(b"ack")
+    socket_fd.close()
 
 
 main()
