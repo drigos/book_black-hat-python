@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
+import getopt
 import sys
 
 
@@ -41,6 +42,39 @@ def main():
 
     if not len(sys.argv[1:]):
         usage()
+
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "hlcu:e:t:p:", [
+            "help", "listen", "command", "upload", "execute", "target", "port"
+        ])
+    except getopt.GetoptError as err:
+        print(str(err))
+        usage()
+
+    for opt, arg in opts:
+        if opt in ("-h", "--help"):
+            usage()
+        elif opt in ("-l", "--listen"):
+            listen = True
+        elif opt in ("-c", "--command"):
+            command = True
+        elif opt in ("-u", "--upload"):
+            upload = arg
+        elif opt in ("-e", "--execute"):
+            execute = arg
+        elif opt in ("-t", "--target"):
+            target = arg
+        elif opt in ("-p", "--port"):
+            port = int(arg)
+        else:
+            assert False, "Unhandled option"
+
+    print("listen:", listen)
+    print("command:", command)
+    print("upload:", upload)
+    print("execute:", execute)
+    print("target:", target)
+    print("port:", port)
 
 
 main()
