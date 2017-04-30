@@ -96,9 +96,55 @@ def server_loop():
     server.bind((target, port))
     server.listen(5)
 
-    socket_fd, socket_str = server.accept()
-    socket_fd.send(b"ack")
-    socket_fd.close()
+    while True:
+        socket_fd, socket_str = server.accept()
+        request = recv_until_newline(socket_fd)
+        while request:
+            print(request.decode()[:-1])
+            socket_fd.send(b"ack\r\n")
+            request = recv_until_newline(socket_fd)
+
+
+# http://stackoverflow.com/questions/667640/how-to-tell-if-a-connection-is-dead-in-python#667710
+
+def recv_until_newline(socket):
+    data = b''
+    chunk = b''
+    while b'\n' not in chunk:
+        chunk = socket.recv(5)
+
+        if not chunk:
+            break
+
+        data += chunk
+
+    return data
+
+
+def recv_n_bytes(socket, n_bytes):
+    data = b''
+    while len(data) < n_bytes:
+        chunk = socket.recv(n_bytes - len(data))
+
+        if not chunk:
+            break
+
+        data += chunk
+
+    return data
+
+
+def recv_all(socket):
+    data = b''
+    while True:
+        chunk = socket.recv(5)
+
+        if not chunk:
+            break
+
+        data += chunk
+
+    return data
 
 
 main()
