@@ -5,6 +5,7 @@
 import getopt
 import socket
 import sys
+import threading
 
 
 listen = False
@@ -98,11 +99,16 @@ def server_loop():
 
     while True:
         socket_fd, socket_str = server.accept()
-        request = recv_until_newline(socket_fd)
-        while request:
-            print(request.decode()[:-1])
-            socket_fd.send(b"ack\r\n")
-            request = recv_until_newline(socket_fd)
+        client_thread = threading.Thread(target=client_handler, args=(socket_fd,))
+        client_thread.start()
+
+
+def client_handler(client):
+    request = recv_until_newline(client)
+    while request:
+        print(str(threading.get_ident()) + ": " + request.decode()[:-1])
+        client.send(b"ack\r\n")
+        request = recv_until_newline(client)
 
 
 # http://stackoverflow.com/questions/667640/how-to-tell-if-a-connection-is-dead-in-python#667710
