@@ -4,6 +4,7 @@
 
 import getopt
 import socket
+import subprocess
 import sys
 import threading
 
@@ -118,6 +119,11 @@ def client_handler(client):
         except IOError as err:
             print(str(err))
 
+    elif len(execute):
+        with client:
+            output = run_command(execute)
+            client.send(output)
+
     else:
         request = recv_until_newline(client)
         while request:
@@ -126,17 +132,33 @@ def client_handler(client):
             request = recv_until_newline(client)
 
 
+def run_command(command):
+    command = command.rstrip()
+
+    try:
+        output = subprocess.check_output(command,
+                                         stderr=subprocess.STDOUT,
+                                         shell=True)
+        # NOTE (rodrigo:2017-05-01): Python 3.5
+        # output = subprocess.run(command, check=True, shell=True,
+        #                         stdout=subprocess.PIPE,
+        #                         stderr=subprocess.STDOUT).stdout
+    except subprocess.CalledProcessError as err:
+        output = str(err).encode("utf-8")
+
+    return output
+
+
 # http://stackoverflow.com/questions/667640/how-to-tell-if-a-connection-is-dead-in-python#667710
 
 def recv_until_newline(socket):
     data = b''
     chunk = b''
+
     while b'\n' not in chunk:
         chunk = socket.recv(5)
-
         if not chunk:
             break
-
         data += chunk
 
     return data
@@ -144,12 +166,11 @@ def recv_until_newline(socket):
 
 def recv_n_bytes(socket, n_bytes):
     data = b''
+
     while len(data) < n_bytes:
         chunk = socket.recv(n_bytes - len(data))
-
         if not chunk:
             break
-
         data += chunk
 
     return data
@@ -157,12 +178,11 @@ def recv_n_bytes(socket, n_bytes):
 
 def recv_all(socket):
     data = b''
+
     while True:
         chunk = socket.recv(5)
-
         if not chunk:
             break
-
         data += chunk
 
     return data
