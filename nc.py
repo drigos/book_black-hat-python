@@ -110,7 +110,15 @@ def client_handler(client):
     global upload
     global execute
 
-    if len(upload):
+    if command:
+        client.send(b"terminal> ")
+        cmd_buffer = recv_until_newline(client)
+        while cmd_buffer:
+            output = run_command(cmd_buffer)
+            client.send(output + b"terminal> ")
+            cmd_buffer = recv_until_newline(client)
+
+    elif len(upload):
         file_buffer = recv_all(client)
 
         try:
@@ -128,7 +136,7 @@ def client_handler(client):
         request = recv_until_newline(client)
         while request:
             print(str(threading.get_ident()) + ": " + request.decode("utf-8")[:-1])
-            client.send(b"ack\r\n")
+            client.send(b"[ack]\r\n")
             request = recv_until_newline(client)
 
 
@@ -136,7 +144,7 @@ def run_command(command):
     command = command.rstrip()
 
     try:
-        output = subprocess.check_output(command,
+        output = subprocess.check_output(command.decode("utf-8"),
                                          stderr=subprocess.STDOUT,
                                          shell=True)
         # NOTE (rodrigo:2017-05-01): Python 3.5
@@ -144,7 +152,7 @@ def run_command(command):
         #                         stdout=subprocess.PIPE,
         #                         stderr=subprocess.STDOUT).stdout
     except subprocess.CalledProcessError as err:
-        output = str(err).encode("utf-8")
+        output = "".join([str(err), "\n"]).encode("utf-8")
 
     return output
 
