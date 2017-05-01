@@ -105,11 +105,25 @@ def server_loop():
 
 
 def client_handler(client):
-    request = recv_until_newline(client)
-    while request:
-        print(str(threading.get_ident()) + ": " + request.decode()[:-1])
-        client.send(b"ack\r\n")
+    global command
+    global upload
+    global execute
+
+    if len(upload):
+        file_buffer = recv_all(client)
+
+        try:
+            with open(upload, "wb") as file_descriptor:
+                file_descriptor.write(file_buffer)
+        except IOError as err:
+            print(str(err))
+
+    else:
         request = recv_until_newline(client)
+        while request:
+            print(str(threading.get_ident()) + ": " + request.decode("utf-8")[:-1])
+            client.send(b"ack\r\n")
+            request = recv_until_newline(client)
 
 
 # http://stackoverflow.com/questions/667640/how-to-tell-if-a-connection-is-dead-in-python#667710
