@@ -3,6 +3,8 @@
 
 
 import getopt
+import os
+import platform
 import socket
 import subprocess
 import sys
@@ -111,11 +113,12 @@ def client_handler(client):
     global execute
 
     if command:
-        client.send(b"terminal> ")
+        prompt = "".join([os.getlogin(), "@", platform.node(), "> "]).encode("utf-8")
+        client.send(prompt)
         cmd_buffer = recv_until_newline(client)
         while cmd_buffer:
             output = run_command(cmd_buffer)
-            client.send(output + b"terminal> ")
+            client.send(output + prompt)
             cmd_buffer = recv_until_newline(client)
 
     elif len(upload):
