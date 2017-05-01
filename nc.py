@@ -113,13 +113,15 @@ def client_handler(client):
     global execute
 
     if command:
-        prompt = "".join([os.getlogin(), "@", platform.node(), "> "]).encode("utf-8")
-        client.send(prompt)
-        cmd_buffer = recv_until_newline(client)
-        while cmd_buffer:
-            output = run_command(cmd_buffer)
-            client.send(output + prompt)
+        with client:
+            prompt = "".join([os.getlogin(), "@", platform.node(), "> "]).encode("utf-8")
+            exit_cmd = b"exit\n"
+            client.send(prompt)
             cmd_buffer = recv_until_newline(client)
+            while cmd_buffer and not cmd_buffer == exit_cmd:
+                output = run_command(cmd_buffer)
+                client.send(output + prompt)
+                cmd_buffer = recv_until_newline(client)
 
     elif len(upload):
         file_buffer = recv_all(client)
