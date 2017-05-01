@@ -100,6 +100,7 @@ def server_loop():
     while True:
         socket_fd, socket_str = server.accept()
         client_thread = threading.Thread(target=client_handler, args=(socket_fd,))
+        client_thread.daemon = True  # Remove as child threads ao pressionar ctrl-c
         client_thread.start()
 
 
